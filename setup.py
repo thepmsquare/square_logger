@@ -10,7 +10,7 @@ setup(
     install_requires=[],
     author="thePmSquare",
     author_email="thepmsquare@thepmsquare.com",
-    description="FastAPI application, meant to be used for encoding and decoding messages in images i.e. steganography.",
+    description="python logger for my personal use.",
     url="https://github.com/thepmsquare/square_logger",
     classifiers=[
         "Development Status :: 3 - Alpha",
