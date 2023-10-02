@@ -1,3 +1,4 @@
+import functools
 import logging
 from logging.handlers import TimedRotatingFileHandler
 import os
@@ -50,3 +51,16 @@ class SquareLogger:
             return logger
         except Exception:
             raise
+
+    def auto_logger(self, func):
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            try:
+                self.logger.debug(f"Calling {func._name_} with args: {args} and kwargs: {kwargs}")
+                result = func(*args, **kwargs)
+                self.logger.debug(f"{func._name_} returned: {result}")
+                return result
+            except Exception as e:
+                self.logger.error(f"An exception occurred in {func._name_}: {e}")
+                raise
+        return wrapper
