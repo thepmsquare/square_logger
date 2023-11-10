@@ -1,17 +1,18 @@
+import asyncio
 import functools
 import logging
-from logging.handlers import TimedRotatingFileHandler
 import os
+from logging.handlers import TimedRotatingFileHandler
 
 from square_logger.configuration import cint_log_level, cstr_log_path
 
 
 class CustomTimedRotatingFileHandler(TimedRotatingFileHandler):
     def __init__(
-        self,
-        filename,
-        when="MIDNIGHT",
-        interval=1,
+            self,
+            filename,
+            when="MIDNIGHT",
+            interval=1,
     ):
         super().__init__(
             filename,
@@ -56,11 +57,26 @@ class SquareLogger:
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
             try:
-                self.logger.debug(f"Calling {func._name_} with args: {args} and kwargs: {kwargs}")
+                self.logger.debug(f"Calling {func.__name__} with args: {args} and kwargs: {kwargs}")
                 result = func(*args, **kwargs)
-                self.logger.debug(f"{func._name_} returned: {result}")
+                self.logger.debug(f"{func.__name__} returned: {result}")
                 return result
             except Exception as e:
-                self.logger.error(f"An exception occurred in {func._name_}: {e}")
+                self.logger.error(f"An exception occurred in {func.__name__}: {e}")
                 raise
+
+        return wrapper
+
+    def async_auto_logger(self, func):
+        @functools.wraps(func)
+        async def wrapper(*args, **kwargs):
+            try:
+                self.logger.debug(f"Calling {func.__name__} with args: {args} and kwargs: {kwargs}")
+                result = await func(*args, **kwargs)
+                self.logger.debug(f"{func.__name__} returned: {result}")
+                return result
+            except Exception as e:
+                self.logger.error(f"An exception occurred in {func.__name__}: {e}")
+                raise
+
         return wrapper
