@@ -1,4 +1,3 @@
-import asyncio
 import functools
 import logging
 import os
@@ -9,10 +8,10 @@ from square_logger.configuration import cint_log_level, cstr_log_path
 
 class CustomTimedRotatingFileHandler(TimedRotatingFileHandler):
     def __init__(
-            self,
-            filename,
-            when="MIDNIGHT",
-            interval=1,
+        self,
+        filename,
+        when="MIDNIGHT",
+        interval=1,
     ):
         super().__init__(
             filename,
@@ -36,6 +35,8 @@ class SquareLogger:
 
     def main(self):
         try:
+            if not os.path.exists(cstr_log_path):
+                os.makedirs(cstr_log_path)
             logger = logging.getLogger("square_logger")
             logger.setLevel(cint_log_level)
             handler = CustomTimedRotatingFileHandler(
@@ -57,7 +58,9 @@ class SquareLogger:
         @functools.wraps(func)
         def wrapper(*args, **kwargs):
             try:
-                self.logger.debug(f"Calling {func.__name__} with args: {args} and kwargs: {kwargs}")
+                self.logger.debug(
+                    f"Calling {func.__name__} with args: {args} and kwargs: {kwargs}"
+                )
                 result = func(*args, **kwargs)
                 self.logger.debug(f"{func.__name__} returned: {result}")
                 return result
@@ -71,7 +74,9 @@ class SquareLogger:
         @functools.wraps(func)
         async def wrapper(*args, **kwargs):
             try:
-                self.logger.debug(f"Calling {func.__name__} with args: {args} and kwargs: {kwargs}")
+                self.logger.debug(
+                    f"Calling {func.__name__} with args: {args} and kwargs: {kwargs}"
+                )
                 result = await func(*args, **kwargs)
                 self.logger.debug(f"{func.__name__} returned: {result}")
                 return result
