@@ -1,13 +1,12 @@
-import configparser
 import os
 
-config = configparser.ConfigParser()
+from lapa_commons.main import read_configuration_from_file_path
+
 config_file_path = (
     os.path.dirname(os.path.abspath(__file__)) + os.sep + "data" + os.sep + "config.ini"
 )
-config.read(config_file_path)
-
+ldict_configurations = read_configuration_from_file_path(config_file_path)
 
 # get all vars and typecast
-cint_log_level = config.getint("ENVIRONMENT", "LOG_LEVEL")
-cstr_log_path = config.get("ENVIRONMENT", "LOG_PATH")
+cint_log_level = int(ldict_configurations["ENVIRONMENT"]["LOG_LEVEL"])
+cstr_log_path = ldict_configurations["ENVIRONMENT"]["LOG_PATH"]

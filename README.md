@@ -2,13 +2,17 @@
 
 ## about
 
-python logger for my personal use
+python logger for my personal use.
 
 ## env
 
 python - 3.9.6
 
 ## changelog
+
+### v1.0.3
+
+- config is being read using lapa_commons.
 
 ### v1.0.2
 
