@@ -10,6 +10,11 @@ python - 3.9.6
 
 ## changelog
 
+### v1.0.4
+
+- Added a new configuration option backupCount to specify the number of backup log files to retain during rotation in
+  the logger.
+
 ### v1.0.3
 
 - config is being read using lapa_commons.
