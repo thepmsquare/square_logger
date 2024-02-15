@@ -2,27 +2,24 @@ import functools
 import logging
 import os
 from logging.handlers import TimedRotatingFileHandler
+import re
 
-from square_logger.configuration import cint_log_level, cstr_log_path
+from square_logger.configuration import cint_log_level, cstr_log_path, cint_log_backup_count
 
 
 class CustomTimedRotatingFileHandler(TimedRotatingFileHandler):
     def __init__(
-        self,
-        filename,
-        when="MIDNIGHT",
-        interval=1,
+            self,
+            filename,
+            when="MIDNIGHT",
+            interval=1,
     ):
         super().__init__(
             filename,
             when,
             interval,
+            cint_log_backup_count
         )
-
-    def rotation_filename(self, default_name):
-        base, ext = os.path.splitext(default_name)
-        base1, base2 = os.path.splitext(base)
-        return f"{base1}{ext}{base2}"
 
 
 class SquareLogger:
@@ -43,6 +40,8 @@ class SquareLogger:
                 f"{cstr_log_path}{os.sep}{self.gstr_log_file_name}.log",
             )
             handler.suffix = "%d-%B-%Y"
+            handler.namer = lambda name: name.replace(".log", "") + ".log"
+            handler.extMatch = re.compile(r"\d{2}-\w+-\d{4}$")
             handler.setLevel(cint_log_level)
             formatter = logging.Formatter(
                 "=== === ===\n%(asctime)s\n%(levelname)s\n%(message)s\n=== === ===\n\n",
