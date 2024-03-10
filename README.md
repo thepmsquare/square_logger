@@ -10,6 +10,10 @@ python - 3.9.6
 
 ## changelog
 
+### v1.0.5
+
+- change config default to relative path.
+
 ### v1.0.4
 
 - Added a new configuration option backupCount to specify the number of backup log files to retain during rotation in
@@ -22,12 +26,12 @@ python - 3.9.6
 ### v1.0.2
 
 - create log path folder if they don't exist.
-- change config default to relative path
+- change config default to relative path.
 
 ### v1.0.1
 
-- bug fix in auto_logger and implement async_auto_logger
+- bug fix in auto_logger and implement async_auto_logger.
 
 ### v1.0.0
 
-- initial implementation
+- initial implementation.
