@@ -4,7 +4,7 @@ setup(
     name="square_logger",
     version="1.0.6",
     packages=find_packages(),
-    install_requires=["lapa_commons>=0.0.1"],
+    install_requires=[],
     author="thePmSquare, Amish Palkar",
     author_email="thepmsquare@gmail.com, amishpalkar302001@gmail.com",
     description="python logger for my personal use.",
