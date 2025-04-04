@@ -1,7 +1,9 @@
 import functools
+import glob
 import logging
 import os
 import re
+from datetime import datetime, timedelta
 from logging.handlers import TimedRotatingFileHandler
 
 
@@ -58,6 +60,26 @@ class SquareLogger:
         except Exception:
             raise
 
+    def cleanup_old_logs(self):
+        log_pattern = f"{self.gstr_log_path}{os.sep}{self.gstr_log_file_name}.*.log"
+        log_files = glob.glob(log_pattern)
+
+        def extract_date(log_file):
+            match = re.search(r"(\d{2}-[A-Za-z]+-\d{4})", log_file)
+            if match:
+                date_str = match.group(1)
+                return datetime.strptime(date_str, "%d-%B-%Y")
+            else:
+                return datetime.min
+
+        log_files_with_date = [{"file": x, "date": extract_date(x)} for x in log_files]
+
+        for log_file in log_files_with_date:
+            if log_file["date"] < datetime.now() - timedelta(
+                days=self.gint_log_backup_count
+            ):
+                os.remove(log_file["file"])
+
     def main(self):
         try:
             if not os.path.exists(self.gstr_log_path):
@@ -70,7 +92,7 @@ class SquareLogger:
             )
             handler.suffix = "%d-%B-%Y"
             handler.namer = lambda name: name.replace(".log", "") + ".log"
-            handler.extMatch = re.compile(r"\d{2}-\w+-\d{4}$")
+            handler.extMatch = re.compile(r"\d{2}-[A-Za-z]+-\d{4}$")
             handler.setLevel(self.gint_log_level)
             formatter = logging.Formatter(
                 "=== === ===\n%(asctime)s\n%(levelname)s\n%(message)s\n=== === ===\n\n",
@@ -78,6 +100,7 @@ class SquareLogger:
             )
             handler.setFormatter(formatter)
             logger.addHandler(handler)
+            self.cleanup_old_logs()
             return logger
         except Exception:
             raise

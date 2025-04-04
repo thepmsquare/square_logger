@@ -10,6 +10,10 @@ python >= 3.9.6
 
 ## changelog
 
+### v1.0.7
+
+- add cleanup_old_logs.
+
 ### v1.0.6
 
 - remove config and move variable as init parameters for SquareLogger class.
