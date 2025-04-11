@@ -10,6 +10,15 @@ python >= 3.9.6
 
 ## changelog
 
+### v2.0.0
+
+- remove async_auto_logger to merge with auto_logger.
+- new dependencies pytest and pydantic.
+- new optional input parameter pbool_enable_redaction.
+- add redacted_keys parameter in auto_logger.
+- add common fixture log_folder.
+- add tests for auto_logger.
+
 ### v1.0.7
 
 - add cleanup_old_logs.

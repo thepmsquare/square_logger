@@ -2,9 +2,16 @@ from setuptools import setup, find_packages
 
 setup(
     name="square_logger",
-    version="1.0.7",
+    version="2.0.0",
     packages=find_packages(),
-    install_requires=[],
+    install_requires=[
+        "pydantic>=2.5.3",
+    ],
+    extras_require={
+        "test": [
+            "pytest>=8.0.0",
+        ],
+    },
     author="thePmSquare, Amish Palkar",
     author_email="thepmsquare@gmail.com, amishpalkar302001@gmail.com",
     description="python logger for my personal use.",

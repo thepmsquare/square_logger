@@ -1,10 +1,13 @@
 import functools
 import glob
+import inspect
 import logging
 import os
 import re
 from datetime import datetime, timedelta
 from logging.handlers import TimedRotatingFileHandler
+
+from pydantic import BaseModel
 
 
 class CustomTimedRotatingFileHandler(TimedRotatingFileHandler):
@@ -25,6 +28,7 @@ class SquareLogger:
         pint_log_level: int = 20,
         pstr_log_path: str = "logs",
         pint_log_backup_count: int = 3,
+        pbool_enable_redaction: bool = True,
     ):
         """
         Initializes the logger with the specified parameters.
@@ -55,6 +59,7 @@ class SquareLogger:
             self.gint_log_level = pint_log_level
             self.gstr_log_path = pstr_log_path
             self.gint_log_backup_count = pint_log_backup_count
+            self.gbool_enable_redaction = pbool_enable_redaction
 
             self.logger = self.main()
         except Exception:
@@ -105,34 +110,65 @@ class SquareLogger:
         except Exception:
             raise
 
-    def auto_logger(self, func):
-        @functools.wraps(func)
-        def wrapper(*args, **kwargs):
-            try:
-                self.logger.debug(
-                    f"Calling {func.__name__} with args: {args} and kwargs: {kwargs}"
-                )
-                result = func(*args, **kwargs)
-                self.logger.debug(f"{func.__name__} returned: {result}")
-                return result
-            except Exception as e:
-                self.logger.error(f"An exception occurred in {func.__name__}: {e}")
-                raise
+    def auto_logger(self, redacted_keys=None):
+        if redacted_keys is None:
+            redacted_keys = set()
+        else:
+            redacted_keys = set(redacted_keys)
 
-        return wrapper
+        def redact(data):
+            if self.gbool_enable_redaction:
+                if isinstance(data, dict):
+                    return {
+                        k: ("**REDACTED**" if k in redacted_keys else redact(v))
+                        for k, v in data.items()
+                    }
+                elif isinstance(data, (list, tuple, set)):
+                    return type(data)(redact(v) for v in data)
+                elif isinstance(data, BaseModel):
+                    return redact(data.model_dump())
 
-    def async_auto_logger(self, func):
-        @functools.wraps(func)
-        async def wrapper(*args, **kwargs):
-            try:
-                self.logger.debug(
-                    f"Calling {func.__name__} with args: {args} and kwargs: {kwargs}"
-                )
-                result = await func(*args, **kwargs)
-                self.logger.debug(f"{func.__name__} returned: {result}")
-                return result
-            except Exception as e:
-                self.logger.error(f"An exception occurred in {func.__name__}: {e}")
-                raise
+            return data
 
-        return wrapper
+        def decorator(func):
+            is_coroutine = inspect.iscoroutinefunction(func)
+
+            @functools.wraps(func)
+            async def async_wrapper(*args, **kwargs):
+                try:
+                    sig = inspect.signature(func)
+                    bound = sig.bind(*args, **kwargs)
+                    bound.apply_defaults()
+                    all_kwargs = bound.arguments
+                    redacted = redact(all_kwargs)
+                    self.logger.debug(f"Calling {func.__name__} with args: {redacted}.")
+                    result = await func(*args, **kwargs)
+                    self.logger.debug(f"{func.__name__} returned: {redact(result)}")
+                    return result
+                except Exception as e:
+                    self.logger.error(
+                        f"An exception occurred in {func.__name__}: {e}", exc_info=True
+                    )
+                    raise
+
+            @functools.wraps(func)
+            def sync_wrapper(*args, **kwargs):
+                try:
+                    sig = inspect.signature(func)
+                    bound = sig.bind(*args, **kwargs)
+                    bound.apply_defaults()
+                    all_kwargs = bound.arguments
+                    redacted = redact(all_kwargs)
+                    self.logger.debug(f"Calling {func.__name__} with args: {redacted}.")
+                    result = func(*args, **kwargs)
+                    self.logger.debug(f"{func.__name__} returned: {redact(result)}")
+                    return result
+                except Exception as e:
+                    self.logger.error(
+                        f"An exception occurred in {func.__name__}: {e}", exc_info=True
+                    )
+                    raise
+
+            return async_wrapper if is_coroutine else sync_wrapper
+
+        return decorator
