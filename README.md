@@ -22,7 +22,7 @@ pip install square_logger
 
 ## usage
 
-(wip)
+see [USAGE.md](./USAGE.md) or [example.py](./example.py).
 
 ## env
 
