@@ -6,6 +6,14 @@
 
 python logger for my personal use.
 
+## goals
+
+- standardized opinionated logging setup
+- improved readability
+- auto logging decorators
+- redaction support in auto logging
+- simple configuration
+
 ## installation
 
 ```shell
