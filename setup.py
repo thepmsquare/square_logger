@@ -4,7 +4,7 @@ package_name = "square_logger"
 
 setup(
     name=package_name,
-    version="2.0.1",
+    version="3.0.0",
     packages=find_packages(),
     install_requires=[
         "pydantic>=2.5.3",

@@ -1,5 +1,9 @@
 # changelog
 
+## v3.0.0 (in progress)
+
+- **breaking change**: input parameters are no longer in hungarian-style prefixes.
+
 ## v2.0.1
 
 - docs
