@@ -7,7 +7,7 @@ def test_auto_logger_redaction(caplog, log_folder):
         log_path=log_folder,
     )
 
-    @global_object_square_logger.auto_logger(redacted_keys=["secret"])
+    @global_object_square_logger.log_function_calls(redacted_keys=["secret"])
     def do_something(value, secret=None):
         return {"value": value, "secret": secret}
 
@@ -29,7 +29,7 @@ def test_auto_logger_redaction_variation2(caplog, log_folder):
         log_path=log_folder,
     )
 
-    @global_object_square_logger.auto_logger(redacted_keys=["secret"])
+    @global_object_square_logger.log_function_calls(redacted_keys=["secret"])
     def do_something(value, secret=None):
         return {"value": value, "secret": secret}
 
@@ -52,7 +52,7 @@ def test_auto_logger_with_disabled_redaction(caplog, log_folder):
         enable_redaction=False,
     )
 
-    @global_object_square_logger.auto_logger(redacted_keys=["secret"])
+    @global_object_square_logger.log_function_calls(redacted_keys=["secret"])
     def do_something(value, secret=None):
         return {"value": value, "secret": secret}
 
@@ -73,7 +73,7 @@ def test_auto_logger_without_redaction(caplog, log_folder):
         log_path=log_folder,
     )
 
-    @global_object_square_logger.auto_logger()
+    @global_object_square_logger.log_function_calls()
     def do_something(value, secret=None):
         return {"value": value, "secret": secret}
 
@@ -95,7 +95,7 @@ def test_auto_logger_without_redaction_variation2(caplog, log_folder):
         enable_redaction=False,
     )
 
-    @global_object_square_logger.auto_logger()
+    @global_object_square_logger.log_function_calls()
     def do_something(value, secret=None):
         return {"value": value, "secret": secret}
 
@@ -121,7 +121,7 @@ def test_auto_logger_with_pydantic_input(caplog, log_folder):
         log_path=log_folder,
     )
 
-    @global_object_square_logger.auto_logger(redacted_keys=["secret"])
+    @global_object_square_logger.log_function_calls(redacted_keys=["secret"])
     def do_something(input_model: InputModel):
         return input_model
 

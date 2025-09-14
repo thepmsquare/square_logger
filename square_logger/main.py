@@ -9,126 +9,109 @@ from logging.handlers import TimedRotatingFileHandler
 
 from pydantic import BaseModel
 
-
-class CustomTimedRotatingFileHandler(TimedRotatingFileHandler):
-    def __init__(
-        self,
-        filename,
-        log_backup_count,
-        when="MIDNIGHT",
-        interval=1,
-    ):
-        super().__init__(filename, when, interval, log_backup_count)
+# === Constants ===
+LOG_SUFFIX_FORMAT = "%d-%B-%Y"
+LOG_SUFFIX_REGEX = re.compile(r"\d{2}-[A-Za-z]+-\d{4}$")
 
 
-class SquareLogger:
-    def __init__(
-        self,
-        log_file_name: str,
-        log_level: int = 20,
-        log_path: str = "logs",
-        log_backup_count: int = 3,
-        enable_redaction: bool = True,
-    ):
-        """
-        Initializes the logger with the specified parameters.
+# === Utilities ===
+def prune_logs_by_date(log_path: str, log_file_name: str, backup_days: int):
+    """
+    Remove log files older than the allowed backup_days based on the filename suffix date.
+    """
+    log_pattern = f"{log_path}{os.sep}{log_file_name}.*.log"
+    log_files = glob.glob(log_pattern)
 
-            :param log_file_name: str
-                Name of the log file.
-            :param log_level: int, optional, default: 20
-                Logging level, with possible values:
-                | Log Level | Value |
-                | --------- | ----- |
-                | CRITICAL  | 50    |
-                | ERROR     | 40    |
-                | WARNING   | 30    |
-                | INFO      | 20    |
-                | DEBUG     | 10    |
-                | NOTSET    | 0     |
-            :param log_path: str, optional, default: "logs"
-                Path to the directory where log files will be stored. This can be an absolute or relative path.
-            :param log_backup_count: int, optional, default: 3
-                Number of backup log files to keep during rotation. If set to zero, rollover never occurs.
+    def extract_date(log_file_):
+        match = re.search(r"(\d{2}-[A-Za-z]+-\d{4})", log_file_)
+        if match:
+            date_str = match.group(1)
+            return datetime.strptime(date_str, LOG_SUFFIX_FORMAT)
+        else:
+            return datetime.min
 
-            Example:
-                logger = Logger("my_log.log", log_level=10, log_path="/var/logs", log_backup_count=5)
+    log_files_with_date = [(x, extract_date(x)) for x in log_files]
 
-        """
-        try:
-            self.log_file_name = log_file_name
-            self.log_level = log_level
-            self.log_path = log_path
-            self.log_backup_count = log_backup_count
-            self.enable_redaction = enable_redaction
+    for file_path, date in log_files_with_date:
+        if date < datetime.now() - timedelta(days=backup_days):
+            os.remove(file_path)
 
-            self.logger = self.main()
-        except Exception:
-            raise
 
-    def cleanup_old_logs(self):
-        log_pattern = f"{self.log_path}{os.sep}{self.log_file_name}.*.log"
-        log_files = glob.glob(log_pattern)
-
-        def extract_date(log_file_):
-            match = re.search(r"(\d{2}-[A-Za-z]+-\d{4})", log_file_)
-            if match:
-                date_str = match.group(1)
-                return datetime.strptime(date_str, "%d-%B-%Y")
-            else:
-                return datetime.min
-
-        log_files_with_date = [{"file": x, "date": extract_date(x)} for x in log_files]
-
-        for log_file in log_files_with_date:
-            if log_file["date"] < datetime.now() - timedelta(
-                days=self.log_backup_count
-            ):
-                os.remove(log_file["file"])
-
-    def main(self):
-        try:
-            if not os.path.exists(self.log_path):
-                os.makedirs(self.log_path)
-            logger = logging.getLogger("square_logger")
-            logger.setLevel(self.log_level)
-            handler = CustomTimedRotatingFileHandler(
-                filename=f"{self.log_path}{os.sep}{self.log_file_name}.log",
-                log_backup_count=self.log_backup_count,
-            )
-            handler.suffix = "%d-%B-%Y"
-            handler.namer = lambda name: name.replace(".log", "") + ".log"
-            handler.extMatch = re.compile(r"\d{2}-[A-Za-z]+-\d{4}$")
-            handler.setLevel(self.log_level)
-            formatter = logging.Formatter(
-                "=== === ===\n%(asctime)s\n%(levelname)s\n%(message)s\n=== === ===\n\n",
-                datefmt="%d-%B-%Y %I:%M:%S %p %A",
-            )
-            handler.setFormatter(formatter)
-            logger.addHandler(handler)
-            self.cleanup_old_logs()
-            return logger
-        except Exception:
-            raise
-
-    def auto_logger(self, redacted_keys=None):
+class Redactor:
+    @staticmethod
+    def redact(data, redacted_keys=None):
         if redacted_keys is None:
             redacted_keys = set()
         else:
             redacted_keys = set(redacted_keys)
 
-        def redact(data):
-            if self.enable_redaction:
-                if isinstance(data, dict):
-                    return {
-                        k: ("**REDACTED**" if k in redacted_keys else redact(v))
-                        for k, v in data.items()
-                    }
-                elif isinstance(data, (list, tuple, set)):
-                    return type(data)(redact(v) for v in data)
-                elif isinstance(data, BaseModel):
-                    return redact(data.model_dump())
+        if isinstance(data, dict):
+            return {
+                k: (
+                    "**REDACTED**"
+                    if k in redacted_keys
+                    else Redactor.redact(v, redacted_keys)
+                )
+                for k, v in data.items()
+            }
+        elif isinstance(data, (list, tuple, set)):
+            return type(data)(Redactor.redact(v, redacted_keys) for v in data)
+        elif isinstance(data, BaseModel):
+            return Redactor.redact(data.model_dump(), redacted_keys)
 
-            return data
+        return data
+
+
+class SquareTimedRotatingFileHandler(TimedRotatingFileHandler):
+    def __init__(self, filename, log_backup_count, when="MIDNIGHT", interval=1):
+        super().__init__(filename, when, interval, log_backup_count)
+
+
+class LoggerFactory:
+    @staticmethod
+    def build_logger(
+        log_file_name: str, log_path: str, log_level: int, log_backup_count: int
+    ):
+        if not os.path.exists(log_path):
+            os.makedirs(log_path)
+
+        logger = logging.getLogger("square_logger")
+        logger.setLevel(log_level)
+
+        handler = SquareTimedRotatingFileHandler(
+            filename=f"{log_path}{os.sep}{log_file_name}.log",
+            log_backup_count=log_backup_count,
+        )
+        handler.suffix = LOG_SUFFIX_FORMAT
+        handler.namer = lambda name: name.replace(".log", "") + ".log"
+        handler.extMatch = LOG_SUFFIX_REGEX
+        handler.setLevel(log_level)
+
+        formatter = logging.Formatter(
+            "=== === ===\n%(asctime)s\n%(levelname)s\n%(message)s\n=== === ===\n\n",
+            datefmt="%d-%B-%Y %I:%M:%S %p %A",
+        )
+        handler.setFormatter(formatter)
+
+        # prevent duplicate handlers on re-instantiation
+        if not logger.handlers:
+            logger.addHandler(handler)
+
+        prune_logs_by_date(log_path, log_file_name, log_backup_count)
+
+        return logger
+
+
+class AutoLoggerDecorator:
+    def __init__(self, logger, enable_redaction=True):
+        self.logger = logger
+        self.enable_redaction = enable_redaction
+
+    def log_function_calls(self, redacted_keys=None):
+        if redacted_keys is None:
+            redacted_keys = set()
+        else:
+            redacted_keys = set(redacted_keys)
 
         def decorator(func):
             is_coroutine = inspect.iscoroutinefunction(func)
@@ -140,10 +123,16 @@ class SquareLogger:
                     bound = sig.bind(*args, **kwargs)
                     bound.apply_defaults()
                     all_kwargs = bound.arguments
-                    redacted = redact(all_kwargs)
+                    redacted = (
+                        Redactor.redact(all_kwargs, redacted_keys)
+                        if self.enable_redaction
+                        else all_kwargs
+                    )
                     self.logger.debug(f"Calling {func.__name__} with args: {redacted}.")
                     result = await func(*args, **kwargs)
-                    self.logger.debug(f"{func.__name__} returned: {redact(result)}")
+                    self.logger.debug(
+                        f"{func.__name__} returned: {Redactor.redact(result, redacted_keys) if self.enable_redaction else result}"
+                    )
                     return result
                 except Exception as e:
                     self.logger.error(
@@ -158,10 +147,16 @@ class SquareLogger:
                     bound = sig.bind(*args, **kwargs)
                     bound.apply_defaults()
                     all_kwargs = bound.arguments
-                    redacted = redact(all_kwargs)
+                    redacted = (
+                        Redactor.redact(all_kwargs, redacted_keys)
+                        if self.enable_redaction
+                        else all_kwargs
+                    )
                     self.logger.debug(f"Calling {func.__name__} with args: {redacted}.")
                     result = func(*args, **kwargs)
-                    self.logger.debug(f"{func.__name__} returned: {redact(result)}")
+                    self.logger.debug(
+                        f"{func.__name__} returned: {Redactor.redact(result, redacted_keys) if self.enable_redaction else result}"
+                    )
                     return result
                 except Exception as e:
                     self.logger.error(
@@ -172,3 +167,41 @@ class SquareLogger:
             return async_wrapper if is_coroutine else sync_wrapper
 
         return decorator
+
+
+class SquareLogger:
+    def __init__(
+        self,
+        log_file_name: str,
+        log_level: int = 20,
+        log_path: str = "logs",
+        log_backup_count: int = 3,
+        enable_redaction: bool = True,
+    ):
+        """
+        Opinionated logger setup.
+        """
+        self.logger = LoggerFactory.build_logger(
+            log_file_name=log_file_name,
+            log_path=log_path,
+            log_level=log_level,
+            log_backup_count=log_backup_count,
+        )
+        self.decorator = AutoLoggerDecorator(self.logger, enable_redaction)
+
+    def log_function_calls(self, redacted_keys=None):
+        return self.decorator.log_function_calls(redacted_keys)
+
+
+class SquareCustomLogger:
+    def __init__(
+        self,
+        logger: logging.Logger,
+        enable_redaction: bool = True,
+    ):
+
+        self.logger = logger
+        self.decorator = AutoLoggerDecorator(self.logger, enable_redaction)
+
+    def log_function_calls(self, redacted_keys=None):
+        return self.decorator.log_function_calls(redacted_keys)
