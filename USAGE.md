@@ -7,11 +7,11 @@ from square_logger import SquareLogger
 
 # create a logger instance
 logger = SquareLogger(
-    pstr_log_file_name="app",  # log filename prefix
-    pint_log_level=10,  # DEBUG level
-    pstr_log_path="logs",  # directory for logs
-    pint_log_backup_count=5,  # keep 5 days of logs
-    pbool_enable_redaction=True  # redact sensitive keys
+    log_file_name="app",  # log filename prefix
+    log_level=10,  # DEBUG level
+    log_path="logs",  # directory for logs
+    log_backup_count=5,  # keep 5 days of logs
+    enable_redaction=True  # redact sensitive keys
 ).logger
 
 logger.info("application started")
@@ -27,18 +27,18 @@ logs/app.31-August-2025.log
 logs/app.30-August-2025.log
 ```
 
-## using auto_logger decorator
+## using log_function_calls decorator
 
-the auto_logger decorator automatically logs function calls, arguments, return values, and exceptions.
+the log_function_calls decorator automatically logs function calls, arguments, return values, and exceptions.
 it also redacts sensitive keys if configured.
 
 ```python
 from square_logger import SquareLogger
 
-square_logger = SquareLogger("demo", pint_log_level=10)
+square_logger = SquareLogger("demo", log_level=10)
 
 
-@square_logger.auto_logger(redacted_keys={"password", "token"})
+@square_logger.log_function_calls(redacted_keys={"password", "token"})
 def process_user(username: str, password: str, token: str):
     return {"username": username, "status": "ok", "password": password, "token": token}
 
@@ -60,10 +60,10 @@ import asyncio
 
 from square_logger import SquareLogger
 
-square_logger = SquareLogger("demo", pint_log_level=10)
+square_logger = SquareLogger("demo", log_level=10)
 
 
-@square_logger.auto_logger(redacted_keys={"secret"})
+@square_logger.log_function_calls(redacted_keys={"secret"})
 async def fetch_data(user_id: int, secret: str):
     return {"user_id": user_id, "secret": secret, "data": [1, 2, 3]}
 
