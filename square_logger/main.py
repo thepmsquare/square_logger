@@ -70,12 +70,16 @@ class SquareTimedRotatingFileHandler(TimedRotatingFileHandler):
 class LoggerFactory:
     @staticmethod
     def build_logger(
-        log_file_name: str, log_path: str, log_level: int, log_backup_count: int
+        log_file_name: str,
+        log_path: str,
+        log_level: int,
+        log_backup_count: int,
+        logger_name: str,
     ):
         if not os.path.exists(log_path):
             os.makedirs(log_path)
 
-        logger = logging.getLogger("square_logger")
+        logger = logging.getLogger(logger_name)
         logger.setLevel(log_level)
 
         handler = SquareTimedRotatingFileHandler(
@@ -176,6 +180,7 @@ class SquareLogger:
         log_level: int = 20,
         log_path: str = "logs",
         log_backup_count: int = 3,
+        logger_name: str = __name__,
         enable_redaction: bool = True,
     ):
         """
@@ -186,6 +191,7 @@ class SquareLogger:
             log_path=log_path,
             log_level=log_level,
             log_backup_count=log_backup_count,
+            logger_name=logger_name,
         )
         self.decorator = AutoLoggerDecorator(self.logger, enable_redaction)
 

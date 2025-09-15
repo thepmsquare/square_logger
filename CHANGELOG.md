@@ -5,6 +5,8 @@
 - **breaking change**: input parameters are no longer in hungarian-style prefixes.
 - **breaking change**: rename auto_logger to log_function_calls.
 - add SquareCustomLogger class.
+- SquareLogger
+    - new optional parameter logger_name.
 
 ## v2.0.1
 
