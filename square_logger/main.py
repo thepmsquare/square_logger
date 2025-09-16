@@ -1,11 +1,13 @@
 import functools
 import glob
 import inspect
+import json
 import logging
 import os
 import re
 from datetime import datetime, timedelta
 from logging.handlers import TimedRotatingFileHandler
+from typing import Literal
 
 from pydantic import BaseModel
 
@@ -75,6 +77,7 @@ class LoggerFactory:
         log_level: int,
         log_backup_count: int,
         logger_name: str,
+        formatter_choice: Literal["human_readable", "json"],
     ):
         if not os.path.exists(log_path):
             os.makedirs(log_path)
@@ -90,11 +93,26 @@ class LoggerFactory:
         handler.namer = lambda name: name.replace(".log", "") + ".log"
         handler.extMatch = LOG_SUFFIX_REGEX
         handler.setLevel(log_level)
+        if formatter_choice == "human_readable":
 
-        formatter = logging.Formatter(
-            "=== === ===\n%(asctime)s\n%(levelname)s\n%(message)s\n=== === ===\n\n",
-            datefmt="%d-%B-%Y %I:%M:%S %p %A",
-        )
+            formatter = logging.Formatter(
+                "=== === ===\n%(asctime)s\n%(levelname)s\n%(message)s\n=== === ===\n\n",
+                datefmt="%d-%B-%Y %I:%M:%S %p %A",
+            )
+        else:
+            class JsonFormatter(logging.Formatter):
+                def format(self, record):
+                    log_record = {
+                        "timestamp": self.formatTime(
+                            record, datefmt="%Y-%m-%dT%H:%M:%SZ"
+                        ),
+                        "level": record.levelname.lower(),
+                        "message": record.getMessage(),
+                    }
+                    return json.dumps(log_record)
+
+            formatter = JsonFormatter()
+
         handler.setFormatter(formatter)
 
         # prevent duplicate handlers on re-instantiation
@@ -181,6 +199,7 @@ class SquareLogger:
         log_path: str = "logs",
         log_backup_count: int = 3,
         logger_name: str = __name__,
+        formatter_choice: Literal["human_readable", "json"] = "json",
         enable_redaction: bool = True,
     ):
         """
@@ -192,6 +211,7 @@ class SquareLogger:
             log_level=log_level,
             log_backup_count=log_backup_count,
             logger_name=logger_name,
+            formatter_choice=formatter_choice,
         )
         self.decorator = AutoLoggerDecorator(self.logger, enable_redaction)
 

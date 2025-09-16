@@ -7,6 +7,7 @@
 - add SquareCustomLogger class.
 - SquareLogger
     - new optional parameter logger_name.
+    - new optional parameter formatter_choice with human_readable and json as choices.
 
 ## v2.0.1
 
