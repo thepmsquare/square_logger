@@ -1,42 +1,12 @@
 import functools
-import glob
 import inspect
 import json
 import logging
 import os
-import re
-from datetime import datetime, timedelta
 from logging.handlers import TimedRotatingFileHandler
 from typing import Literal
 
 from pydantic import BaseModel
-
-# === Constants ===
-LOG_SUFFIX_FORMAT = "%d-%B-%Y"
-LOG_SUFFIX_REGEX = re.compile(r"\d{2}-[A-Za-z]+-\d{4}$")
-
-
-# === Utilities ===
-def prune_logs_by_date(log_path: str, log_file_name: str, backup_days: int):
-    """
-    Remove log files older than the allowed backup_days based on the filename suffix date.
-    """
-    log_pattern = f"{log_path}{os.sep}{log_file_name}.*.log"
-    log_files = glob.glob(log_pattern)
-
-    def extract_date(log_file_):
-        match = re.search(r"(\d{2}-[A-Za-z]+-\d{4})", log_file_)
-        if match:
-            date_str = match.group(1)
-            return datetime.strptime(date_str, LOG_SUFFIX_FORMAT)
-        else:
-            return datetime.min
-
-    log_files_with_date = [(x, extract_date(x)) for x in log_files]
-
-    for file_path, date in log_files_with_date:
-        if date < datetime.now() - timedelta(days=backup_days):
-            os.remove(file_path)
 
 
 class Redactor:
@@ -89,9 +59,6 @@ class LoggerFactory:
             filename=f"{log_path}{os.sep}{log_file_name}.log",
             log_backup_count=log_backup_count,
         )
-        handler.suffix = LOG_SUFFIX_FORMAT
-        handler.namer = lambda name: name.replace(".log", "") + ".log"
-        handler.extMatch = LOG_SUFFIX_REGEX
         handler.setLevel(log_level)
         if formatter_choice == "human_readable":
 
@@ -100,6 +67,7 @@ class LoggerFactory:
                 datefmt="%d-%B-%Y %I:%M:%S %p %A",
             )
         else:
+
             class JsonFormatter(logging.Formatter):
                 def format(self, record):
                     log_record = {
@@ -118,8 +86,6 @@ class LoggerFactory:
         # prevent duplicate handlers on re-instantiation
         if not logger.handlers:
             logger.addHandler(handler)
-
-        prune_logs_by_date(log_path, log_file_name, log_backup_count)
 
         return logger
 

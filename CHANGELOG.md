@@ -8,6 +8,7 @@
 - SquareLogger
     - new optional parameter logger_name.
     - new optional parameter formatter_choice with human_readable and json as choices.
+    - use default suffix for rotated filenames. :(
 
 ## v2.0.1
 
