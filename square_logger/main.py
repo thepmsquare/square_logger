@@ -95,7 +95,7 @@ class AutoLoggerDecorator:
         self.logger = logger
         self.enable_redaction = enable_redaction
 
-    def log_function_calls(self, redacted_keys=None):
+    def auto_logger(self, redacted_keys=None):
         if redacted_keys is None:
             redacted_keys = set()
         else:
@@ -181,8 +181,8 @@ class SquareLogger:
         )
         self.decorator = AutoLoggerDecorator(self.logger, enable_redaction)
 
-    def log_function_calls(self, redacted_keys=None):
-        return self.decorator.log_function_calls(redacted_keys)
+    def auto_logger(self, redacted_keys=None):
+        return self.decorator.auto_logger(redacted_keys)
 
 
 class SquareCustomLogger:
@@ -195,5 +195,5 @@ class SquareCustomLogger:
         self.logger = logger
         self.decorator = AutoLoggerDecorator(self.logger, enable_redaction)
 
-    def log_function_calls(self, redacted_keys=None):
-        return self.decorator.log_function_calls(redacted_keys)
+    def auto_logger(self, redacted_keys=None):
+        return self.decorator.auto_logger(redacted_keys)

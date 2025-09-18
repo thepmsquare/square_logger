@@ -19,13 +19,13 @@ logger.error("an error message example")
 
 
 # sync function example
-@square_logger.log_function_calls(redacted_keys={"password"})
+@square_logger.auto_logger(redacted_keys={"password"})
 def login(username: str, password: str):
     return {"username": username, "password": password, "status": "ok"}
 
 
 # async function example
-@square_logger.log_function_calls(redacted_keys={"secret"})
+@square_logger.auto_logger(redacted_keys={"secret"})
 async def fetch_data(user_id: int, secret: str):
     return {"user_id": user_id, "secret": secret, "data": [1, 2, 3]}
 

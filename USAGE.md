@@ -27,9 +27,9 @@ logs/app.31-August-2025.log
 logs/app.30-August-2025.log
 ```
 
-## using log_function_calls decorator
+## using auto_logger decorator
 
-the log_function_calls decorator automatically logs function calls, arguments, return values, and exceptions.
+the auto_logger decorator automatically logs function calls, arguments, return values, and exceptions.
 it also redacts sensitive keys if configured.
 
 ```python
@@ -38,7 +38,7 @@ from square_logger import SquareLogger
 square_logger = SquareLogger("demo", log_level=10)
 
 
-@square_logger.log_function_calls(redacted_keys={"password", "token"})
+@square_logger.auto_logger(redacted_keys={"password", "token"})
 def process_user(username: str, password: str, token: str):
     return {"username": username, "status": "ok", "password": password, "token": token}
 
@@ -63,7 +63,7 @@ from square_logger import SquareLogger
 square_logger = SquareLogger("demo", log_level=10)
 
 
-@square_logger.log_function_calls(redacted_keys={"secret"})
+@square_logger.auto_logger(redacted_keys={"secret"})
 async def fetch_data(user_id: int, secret: str):
     return {"user_id": user_id, "secret": secret, "data": [1, 2, 3]}
 
