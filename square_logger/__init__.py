@@ -1,1 +1,1 @@
-from square_logger.main import SquareLogger
+from square_logger.main import SquareLogger, SquareCustomLogger
