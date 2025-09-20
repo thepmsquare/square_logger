@@ -10,9 +10,7 @@ setup(
         "pydantic>=2.5.3",
     ],
     extras_require={
-        "test": [
-            "pytest>=8.0.0",
-        ],
+        "test": ["pytest>=8.0.0", "pytest-asyncio>=1.2.0"],
     },
     author="Parth Mukesh Mangtani, Amish Palkar",
     author_email="thepmsquare@gmail.com, amishpalkar302001@gmail.com",

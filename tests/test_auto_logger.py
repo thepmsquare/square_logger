@@ -1,3 +1,10 @@
+import asyncio
+import json
+from pathlib import Path
+
+import pytest
+
+
 def test_auto_logger_redaction(caplog, log_folder):
     from square_logger import SquareLogger
 
@@ -233,3 +240,100 @@ def test_square_logger_creates_log_file(tmp_path):
 
     # Assert that the log file now exists
     assert os.path.exists(expected_log_file)
+
+
+@pytest.mark.asyncio
+async def test_auto_logger_async_function(caplog, tmp_path):
+    from square_logger import SquareLogger
+    import logging
+
+    logger = SquareLogger(
+        log_file_name="async_log",
+        log_level=logging.DEBUG,
+        log_path=str(tmp_path),
+    )
+
+    @logger.auto_logger(redacted_keys=["secret"])
+    async def async_func(value, secret=None):
+        await asyncio.sleep(0.01)
+        return {"value": value, "secret": secret}
+
+    result = await async_func("visible", secret="12345")
+    log_output = "\n".join(caplog.messages)
+
+    assert result["secret"] == "12345"
+    assert "visible" in log_output
+    assert "**REDACTED**" in log_output
+    assert "12345" not in log_output
+
+
+def test_auto_logger_exception_logging(caplog, tmp_path):
+    from square_logger import SquareLogger
+    import logging
+
+    logger = SquareLogger(
+        log_file_name="error_log",
+        log_level=logging.DEBUG,
+        log_path=str(tmp_path),
+    )
+
+    @logger.auto_logger()
+    def will_fail(x):
+        raise ValueError("boom!")
+
+    with pytest.raises(ValueError):
+        will_fail(1)
+
+    assert "An exception occurred in will_fail" in caplog.text
+    assert "boom!" in caplog.text
+
+
+def test_square_logger_json_formatter_outputs_valid_json(tmp_path):
+    from square_logger import SquareLogger
+
+    log_file_name = "json_log"
+    log_path = tmp_path
+    logger = SquareLogger(
+        log_file_name=log_file_name,
+        log_level=10,
+        log_path=str(log_path),
+        formatter_choice="json",
+    )
+
+    @logger.auto_logger()
+    def greet(name):
+        return f"Hello, {name}"
+
+    greet("World")
+
+    # read the actual log file instead of using caplog
+    log_file = Path(log_path) / f"{log_file_name}.log"
+    with open(log_file, "r", encoding="utf-8") as f:
+        lines = f.read().strip().splitlines()
+
+    for line in lines:
+        parsed = json.loads(line)
+        assert "timestamp" in parsed
+        assert "level" in parsed
+        assert "message" in parsed
+
+
+def test_square_logger_no_duplicate_handlers(tmp_path):
+    from square_logger import SquareLogger
+    import logging
+
+    logger1 = SquareLogger(
+        log_file_name="dup_test",
+        log_level=logging.DEBUG,
+        log_path=str(tmp_path),
+        logger_name="dup_logger",
+    )
+    logger2 = SquareLogger(
+        log_file_name="dup_test",
+        log_level=logging.DEBUG,
+        log_path=str(tmp_path),
+        logger_name="dup_logger",
+    )
+
+    assert len(logger1.logger.handlers) == 1
+    assert len(logger2.logger.handlers) == 1

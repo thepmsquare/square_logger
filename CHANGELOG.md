@@ -4,10 +4,13 @@
 
 - **breaking change**: input parameters are no longer in hungarian-style prefixes.
 - add SquareCustomLogger class.
+- add new test cases.
 - SquareLogger
     - new optional parameter logger_name.
     - new optional parameter formatter_choice with human_readable and json as choices.
     - use default suffix for rotated filenames. :(
+- dependency
+    - pytest-asyncio>=1.2.0 added for testing
 
 ## v2.0.1
 
