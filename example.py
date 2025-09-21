@@ -1,8 +1,11 @@
 import asyncio
+import logging
 
-from square_logger import SquareLogger
+from square_logger import SquareLogger, SquareCustomLogger
 
-# initialize logger
+# -----------------------
+# using SquareLogger
+# -----------------------
 square_logger = SquareLogger(
     log_file_name="demo",
     log_level=10,  # DEBUG level
@@ -30,9 +33,22 @@ async def fetch_data(user_id: int, secret: str):
     return {"user_id": user_id, "secret": secret, "data": [1, 2, 3]}
 
 
+# -----------------------
+# using SquareCustomLogger
+# -----------------------
+base_logger = logging.getLogger("external_logger")
+custom_logger = SquareCustomLogger(base_logger, enable_redaction=True)
+
+
+@custom_logger.auto_logger(redacted_keys={"token"})
+def some_func(token: str):
+    return {"token": token, "status": "ok"}
+
+
 if __name__ == "__main__":
-    # run sync function
+    # run sync functions
     login("alice", "supersecret")
+    some_func("hidden_token")
 
     # run async function
     asyncio.run(fetch_data(42, "hidden_secret"))

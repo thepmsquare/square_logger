@@ -1,6 +1,6 @@
 # changelog
 
-## v3.0.0 (in progress)
+## v3.0.0
 
 - **breaking change**: input parameters are no longer in hungarian-style prefixes.
 - add SquareCustomLogger class.
