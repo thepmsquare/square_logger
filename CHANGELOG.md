@@ -1,5 +1,9 @@
 # changelog
 
+## v3.0.1
+
+- remove setup.py and switch to pyproject.toml
+
 ## v3.0.0
 
 - **breaking change**: input parameters are no longer in hungarian-style prefixes.

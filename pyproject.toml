@@ -1,3 +1,31 @@
 [build-system]
-requires = ["setuptools>=75.3.0", "wheel"]
-build-backend = "setuptools.build_meta"
+requires = ["hatchling"]
+build-backend = "hatchling.build"
+
+[project]
+name = "square_logger"
+version = "3.0.1"
+description = "python logger for my personal use."
+readme = "README.md"
+requires-python = ">=3.12"
+license = { text = "GPLv3" }
+authors = [
+    { name = "Parth Mukesh Mangtani", email = "thepmsquare@gmail.com" },
+    { name = "Amish Palkar", email = "amishpalkar302001@gmail.com" }
+]
+urls = { homepage = "https://github.com/thepmsquare/square_logger" }
+keywords = ["logger", "utilities"]
+dependencies = ["pydantic>=2.5.3"]
+optional-dependencies = { test = ["pytest>=8.0.0", "pytest-asyncio>=1.2.0"] }
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Utilities",
+    "Topic :: System :: Logging",
+    "Topic :: Software Development :: Libraries :: Python Modules"
+]
+
+[tool.hatch.build.targets.wheel]
+packages = ["square_logger"]
