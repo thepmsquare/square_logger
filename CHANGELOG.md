@@ -1,5 +1,9 @@
 # changelog
 
+## v3.0.3
+
+- add all section for dependencies.
+
 ## v3.0.2
 
 - switch build-system to uv.

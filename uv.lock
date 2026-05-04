@@ -144,13 +144,17 @@ wheels = [
 
 [[package]]
 name = "square-logger"
-version = "3.0.2"
+version = "3.0.3"
 source = { editable = "." }
 dependencies = [
     { name = "pydantic" },
 ]
 
 [package.optional-dependencies]
+all = [
+    { name = "pytest" },
+    { name = "pytest-asyncio" },
+]
 test = [
     { name = "pytest" },
     { name = "pytest-asyncio" },
@@ -159,10 +163,12 @@ test = [
 [package.metadata]
 requires-dist = [
     { name = "pydantic", specifier = ">=2.5.3" },
+    { name = "pytest", marker = "extra == 'all'", specifier = ">=8.0.0" },
     { name = "pytest", marker = "extra == 'test'", specifier = ">=8.0.0" },
+    { name = "pytest-asyncio", marker = "extra == 'all'", specifier = ">=1.2.0" },
     { name = "pytest-asyncio", marker = "extra == 'test'", specifier = ">=1.2.0" },
 ]
-provides-extras = ["test"]
+provides-extras = ["test", "all"]
 
 [[package]]
 name = "typing-extensions"
