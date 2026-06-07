@@ -6,7 +6,7 @@ import pytest
 
 @pytest.fixture
 def log_folder():
-    log_folder = "logs"
+    log_folder = "test_logs"
 
     yield log_folder
 

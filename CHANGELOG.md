@@ -1,5 +1,9 @@
 # changelog
 
+## v3.0.4
+
+- update the `__init__.py` file and update tests to clean up logs.
+
 ## v3.0.3
 
 - add all section for dependencies.
